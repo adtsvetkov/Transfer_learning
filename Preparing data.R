@@ -83,8 +83,10 @@ target_data <- function(size_p, size_x, size_t, names)
 
 names <- create_names(size_x)
 
+t = 2
+
 size_t = 10
-size_s = 10*size_t
+size_s = t*size_t
 
 size_p = 5
 size_x = 10
