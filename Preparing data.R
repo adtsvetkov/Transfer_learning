@@ -1,3 +1,6 @@
+#!/usr/bin/env Rscript
+args = commandArgs(trailingOnly=TRUE)
+
 #необходимо подготовить датасет исходных данных и целевых по алгоритму Friedman из статьи Chen et al
 
 create_names <- function(size_x)
@@ -81,18 +84,32 @@ target_data <- function(size_p, size_x, size_t, names)
   return(matr)
 }
 
-names <- create_names(size_x)
+if (length(args) == 0) 
+{
+  t <- 2
+  size_t <- 10
+  size_p <- 5
+  size_x <- 10
+  path1 <- "C:\\source_domain.csv"
+  path2 <- "C:\\target_domain.csv"
+} else if (length(args)==6) {
+  t <- args[1]
+  size_t <- args[2]
+  size_p <- args[3]
+  size_x <- args[4]
+  path1 <- args[5]
+  path2 <- args[6]
+} else if (length(args)!=6)
+{
+    stop("At least one argument must be supplied (input file).n", call.=FALSE)
+}
 
-t = 2
-
-size_t = 10
 size_s = t*size_t
 
-size_p = 5
-size_x = 10
+names <- create_names(size_x)
 
 source <- source_data(size_p, size_x, size_s, names)
 target <- target_data(size_p, size_x, size_t, names)
 
-write.csv(source, "C:\\source_domain.csv")
-write.csv(target, "C:\\target_domain.csv")
+write.csv(source, path1)
+write.csv(target, path2)
