@@ -1,18 +1,21 @@
+#!/usr/bin/Rscript
 args = commandArgs(trailingOnly=TRUE)
 
 require(pracma)
-
-#вектор B мы убрали
+require(quadprog)
+require(glmnet)
+require(xlsx)
 
 #радиально-базисная функция - функция Гаусса
 
-#работает
 RBF <- function(eps, x1_vec, x2_vec) 
 {
   return(exp(-(eps*Norm(x1_vec-x2_vec))^2))
 }
 
-#работает
+minimize <- function(beta, K, k, j, n_s){
+  return((1/2)*(t(beta)%*%K%*%beta) - t(k)%*%beta + j*abs(sum(beta)-n_s))
+}
 
 get_Kij <- function(xs_matr, eps)
 {
@@ -27,8 +30,6 @@ get_Kij <- function(xs_matr, eps)
   }
   return(K)
 }
-
-#работает
 
 get_ki <- function(xs_matr, xt_matr, eps)
 {
@@ -50,26 +51,66 @@ get_ki <- function(xs_matr, xt_matr, eps)
 #V - матрица n x m
 #n_s = n = n_t*t
 
+answer <- data.frame()
+answer_indexes <- data.frame()
+
 KMM <- function(x_t, x_s, eps)
 {
+  #задаем размерности
   m <- ncol(x_t)-1
   V <- matrix()
   n_t = nrow(x_t)
   n_s = nrow(x_s)
   
+  #ищем и выводим K, k
   K <- get_Kij(x_s, eps)
+  print("K matrix:")
   print(K)
   k <- get_ki(x_s, x_t, eps)
+  print("k matrix:")
   print(k)
   
-  ####
-    
-  #grid <- 10^seq(10, -2, length = 100)
-  #x <- model.matrix(K)
-  #lasso <- glmnet(x, K, alpha = 1, lambda = grid)
-  #plot(lasso, xvar = "lambda", label = T, lwd = 2)
-    
-  ###
+  #просим по графику ввести границы лямбды
+  
+  borders <- c(-3.2, -0.5)
+  
+  newgrid <- 10^seq(borders[1], borders[2], length = m)
+  
+  #опорный вектор найдем так:
+  
+  betta_ref <- solve.QP(K, k, K, k, meq = 0, factorized = FALSE)
+  
+  indexarray <- data.frame()
+  bettaarray <- data.frame()
+  
+  for (i in 1:m)
+  {
+    j <- newgrid[i]
+    myans <- optim(betta_ref$solution, minimize, j = j, k = k, K = K, n_s = n_s)$par
+    indexes <- order(myans, decreasing = T)
+    bettaarray <- rbind(bettaarray, sort(myans, decreasing = T))
+    indexarray <-rbind(indexarray, indexes)
+  }
+  indexarray <- t(indexarray)
+  bettaarray <- t(bettaarray)
+  names <- colnames(x_t)
+  names <- names[-length(names)]
+  colnames(indexarray) <- names
+  colnames(bettaarray) <- names
+  rownames(indexarray) <- rownames(x_t)
+  rownames(bettaarray) <- rownames(x_t)
+  
+  answer <<- bettaarray
+  answer_indexes <<- indexarray
+  
+  #рисуем зависимость лямбда от K и k
+  
+  grid <- 10^seq(10, -5, length = 100)
+  lasso <- glmnet(K, t(k), alpha = 1, lambda = grid)
+  X11()
+  plot(lasso, xvar = "lambda", label = T, lwd = 2, ylim = c(-2, 4))
+  
+  while(names(dev.cur()) !='null device') Sys.sleep(1)
 }
 
 if (length(args) == 0) 
@@ -84,7 +125,13 @@ if (length(args) == 0)
   stop("At least one argument must be supplied (input file).n", call.=FALSE)
 }
 
+path1 <- "C:\\source_domain.csv"
+path2 <- "C:\\target_domain.csv"
+
 source <- as.matrix(read.csv(path1, row.names = 1))
 target <- as.matrix(read.csv(path2, row.names = 1))
 
-V <- KMM(target, source, 0.1)
+KMM(target, source, 0.1)
+
+write.xlsx(answer, file = "C:\\KMM_results.xlsx", sheetName="Beta")
+write.xlsx(answer_indexes, file = "C:\\KMM_results.xlsx", sheetName="Indexes", append = T)
