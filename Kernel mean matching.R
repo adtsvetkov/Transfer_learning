@@ -57,10 +57,10 @@ answer_indexes <- data.frame()
 KMM <- function(x_t, x_s, eps)
 {
   #задаем размерности
-  m <- ncol(x_t)-1
+  m <- ncol(x_t) - 1
   V <- matrix()
-  n_t = nrow(x_t)
-  n_s = nrow(x_s)
+  n_t <- nrow(x_t)
+  n_s <- nrow(x_s)
   
   #ищем и выводим K, k
   K <- get_Kij(x_s, eps)
@@ -82,6 +82,7 @@ KMM <- function(x_t, x_s, eps)
   
   indexarray <- data.frame()
   bettaarray <- data.frame()
+  lambdanames <- vector()
   
   for (i in 1:m)
   {
@@ -90,15 +91,13 @@ KMM <- function(x_t, x_s, eps)
     indexes <- order(myans, decreasing = T)
     bettaarray <- rbind(bettaarray, sort(myans, decreasing = T))
     indexarray <-rbind(indexarray, indexes)
+    lambdanames <- append(lambdanames, paste("l", i, sep="_"))
   }
   indexarray <- t(indexarray)
   bettaarray <- t(bettaarray)
-  names <- colnames(x_t)
-  names <- names[-length(names)]
-  colnames(indexarray) <- names
-  colnames(bettaarray) <- names
-  rownames(indexarray) <- rownames(x_s)
-  rownames(bettaarray) <- rownames(x_s)
+  
+  colnames(indexarray) <-  colnames(bettaarray) <- lambdanames
+  rownames(indexarray) <- rownames(bettaarray) <- rep("b_i", times = n_s)
   
   answer <<- bettaarray
   answer_indexes <<- indexarray
