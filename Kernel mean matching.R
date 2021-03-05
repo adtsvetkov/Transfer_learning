@@ -19,13 +19,13 @@ minimize <- function(beta, K, k, j, n_s){
 
 get_Kij <- function(xs_matr, eps)
 {
-  r <- ncol(xs_matr)-1
+  r <- nrow(xs_matr)
   K <- matrix(nrow = r, ncol = r)
   for (i in 1:r) 
   {
     for (j in 1:r) 
     {
-      K[i, j] <- RBF(eps, xs_matr[, i], xs_matr[, j])
+      K[i, j] <- RBF(eps, xs_matr[i, ], xs_matr[j, ])
     }
   }
   return(K)
@@ -34,14 +34,14 @@ get_Kij <- function(xs_matr, eps)
 get_ki <- function(xs_matr, xt_matr, eps)
 {
   k <- vector()
-  s <- ncol(xs_matr)-1
-  t <- ncol(xt_matr)-1
+  s <- nrow(xs_matr)
+  t <- nrow(xt_matr)
   for (i in 1:s)
   {
     vec <- vector()
     for(j in 1:t) 
     {
-      vec <- append(vec, RBF(eps, xs_matr[, i], xt_matr[, j]))
+      vec <- append(vec, RBF(eps, xs_matr[i, ], xt_matr[j, ]))
     }
     k <- append(k, (s/t)*sum(vec))
   }
@@ -72,7 +72,7 @@ KMM <- function(x_t, x_s, eps)
   
   #просим по графику ввести границы лямбды
   
-  borders <- c(-3.2, -0.5)
+  borders <- c(-3.5, 4)
   
   newgrid <- 10^seq(borders[1], borders[2], length = m)
   
@@ -97,8 +97,8 @@ KMM <- function(x_t, x_s, eps)
   names <- names[-length(names)]
   colnames(indexarray) <- names
   colnames(bettaarray) <- names
-  rownames(indexarray) <- rownames(x_t)
-  rownames(bettaarray) <- rownames(x_t)
+  rownames(indexarray) <- rownames(x_s)
+  rownames(bettaarray) <- rownames(x_s)
   
   answer <<- bettaarray
   answer_indexes <<- indexarray
@@ -106,9 +106,9 @@ KMM <- function(x_t, x_s, eps)
   #рисуем зависимость лямбда от K и k
   
   grid <- 10^seq(10, -5, length = 100)
-  lasso <- glmnet(K, t(k), alpha = 1, lambda = grid)
+  lasso <- glmnet(K, t(k), alpha = 0.3, lambda = grid)
   X11()
-  plot(lasso, xvar = "lambda", label = T, lwd = 2, ylim = c(-2, 4))
+  plot(lasso, xvar = "lambda", label = T, lwd = 2, ylim = c(-3, 6))
   
   while(names(dev.cur()) !='null device') Sys.sleep(1)
 }
