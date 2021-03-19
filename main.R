@@ -170,6 +170,7 @@ tree_breeding <- function(getbest,
         populationSize = j,
         inputVariables = inputVariableSet1,
         constantSet = constantFactorySet1,
+        stopCondition = makeStepsStopCondition(3),
         verbose = F
       )$population
     },
@@ -232,8 +233,7 @@ beta_breeding <- function(trees, x_s, maxbeta)
         wmse_breeding,
         low,
         up,
-        #control = DEoptim.control(itermax = 1, trace = F),
-        control = DEoptim.control(trace = F),
+        control = DEoptim.control(itermax = 2, trace = F),
         tree = trees[[i]],
         x_s = x_s
       )$optim$bestmem
